@@ -147,14 +147,95 @@ class BitcoinScript
                              'OP_PUBKEY'        => 254,
                              'OP_INVALIDOPCODE' =>255);
 
-    public function setScript($script)
+    private $rOpcodes = array();
+
+    private $mainStack = array();
+    private $secondaryStack = array();
+    private $script;
+
+    public function __construct()
     {
 
     }
 
-    public function executeScript($script)
+    public function setScript($script)
     {
+        $this->script = $script;
+    }
 
+    public function setHexScript($script)
+    {
+        $this->script = hex2bin($script);
+    }
+
+    public function executeOpCode($position)
+    {
+        $opCode = substr($this->script, $position, 1);
+        switch($opCode)
+        {
+
+            case 'OP_CAT':
+            case 'OP_SUBSTR':
+            case 'OP_LEFT':
+            case 'OP_RIGHT':
+            case 'OP_INVERT':
+            case 'OP_AND':
+            case 'OP_OR':
+            case 'OP_XOR':
+            case 'OP_2MUL':
+            case 'OP_2DIV':
+            case 'OP_MUL':
+            case 'OP_DIV':
+            case 'OP_MOD':
+            case 'OP_LSHIFT':
+            case 'OP_RSHIFT':
+                return false;
+
+            case 'OP_1NEGATE':
+            case 'OP_1':
+            case 'OP_2':
+            case 'OP_3':
+            case 'OP_4':
+            case 'OP_5':
+            case 'OP_6':
+            case 'OP_7':
+            case 'OP_8':
+            case 'OP_9':
+            case 'OP_10':
+            case 'OP_11':
+            case 'OP_12':
+            case 'OP_13':
+            case 'OP_14':
+            case 'OP_15':
+            case 'OP_16':
+                //??
+            break;
+
+            case 'OP_NOP':
+            case 'OP_NOP1': case 'OP_NOP2': case 'OP_NOP3': case 'OP_NOP4': case 'OP_NOP5':
+            case 'OP_NOP6': case 'OP_NOP7': case 'OP_NOP8': case 'OP_NOP9': case 'OP_NOP10':
+            break;
+        }
+    }
+
+    public function popFromMainStack()
+    {
+        $this->mainStack = array_pop($this->mainStack);
+    }
+
+    public function popFromSecondaryStack()
+    {
+        $this->secondaryStack = array_pop($this->secondaryStack);
+    }
+
+    public function pushOnMainStack($entry, $type)
+    {
+        $this->mainStack = array_push($this->mainStack, array($entry, $type));
+    }
+
+    public function pushOnSecondaryStack($entry, $type)
+    {
+        $this->secondaryStack = array_push($this->secondaryStack, array($entry, $type));
     }
 
 }
