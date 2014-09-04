@@ -150,7 +150,7 @@ class BitcoinScript
     private $rOpcodes = array();
 
     private $mainStack = array();
-    private $secondaryStack = array();
+    private $altStack = array();
     private $script;
 
     public function __construct()
@@ -209,7 +209,7 @@ class BitcoinScript
             case 'OP_15':
             case 'OP_16':
                 //??
-            break;
+                break;
 
             case 'OP_NOP':
             case 'OP_NOP1': case 'OP_NOP2': case 'OP_NOP3': case 'OP_NOP4': case 'OP_NOP5':
@@ -220,22 +220,22 @@ class BitcoinScript
 
     public function popFromMainStack()
     {
-        $this->mainStack = array_pop($this->mainStack);
+        array_pop($this->mainStack);
     }
 
-    public function popFromSecondaryStack()
+    public function popFromAltStack()
     {
-        $this->secondaryStack = array_pop($this->secondaryStack);
+        array_pop($this->altStack);
     }
 
     public function pushOnMainStack($entry, $type)
     {
-        $this->mainStack = array_push($this->mainStack, array($entry, $type));
+        array_push($this->mainStack, array($entry, $type));
     }
 
-    public function pushOnSecondaryStack($entry, $type)
+    public function pushOnAlStack($entry, $type)
     {
-        $this->secondaryStack = array_push($this->secondaryStack, array($entry, $type));
+        array_push($this->altStack, array($entry, $type));
     }
 
 }
