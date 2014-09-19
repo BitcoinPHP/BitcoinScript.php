@@ -1,0 +1,29 @@
+{
+    "name": "bitcoin-php/bitcoin-script",
+    "type": "library",
+    "description": "PHP library allowing to execute Bitcoin Scripts",
+    "keywords": ["Script","Bitcoin"],
+    "homepage": "https://github.com/BitcoinPHP/BitcoinScript.php",
+    "license": "unlicense",
+    "authors": [
+        {
+            "name": "BitcoinPHP",
+            "email": "panda@panda.cat",
+            "homepage": "http://github.com/BitcoinPHP",
+            "role": "Developer"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload": {
+        "psr-0": {
+            "BitcoinPHP\\BitcoinScript": "src"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "4.1.*",
+        "BitcoinPHP/BitcoinECDSA": ">=1.1"
+    }
+}
