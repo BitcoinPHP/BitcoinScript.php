@@ -11,6 +11,11 @@ namespace BitcoinPHP\BitcoinScript;
 class BitcoinScript
 {
 
+    private $vfExec = array();
+    private $mainStack = array();
+    private $altStack = array();
+    private $script;
+
     private $opCodes = array('OP_FALSE'     => 0,
                              'OP_0'         => 0,
                              'OP_PUSHDATA1' => 76,
@@ -147,15 +152,14 @@ class BitcoinScript
                              'OP_PUBKEY'        => 254,
                              'OP_INVALIDOPCODE' =>255);
 
-    private $rOpcodes = array();
-
-    private $mainStack = array();
-    private $altStack = array();
-    private $script;
+    private $rOpCodes = array();
 
     public function __construct()
     {
-
+        foreach($this->opCodes as $key => $codeNbr)
+        {
+            $this->rOpCodes[$codeNbr] = $key;
+        }
     }
 
     public function setScript($script)
@@ -168,9 +172,15 @@ class BitcoinScript
         $this->script = hex2bin($script);
     }
 
-    public function executeOpCode($position)
+    public function evalScript()
     {
-        $opCode = substr($this->script, $position, 1);
+        $this->executeOpCode();
+    }
+
+    public function executeOpCode($position = 0, $continue = true)
+    {
+        $nextPosition = 0;
+        $opCode = $this->rOpCodes[ord(substr($this->script, $position, 1))];
         switch($opCode)
         {
 
@@ -209,23 +219,58 @@ class BitcoinScript
             case 'OP_15':
             case 'OP_16':
                 //??
-                break;
+            break;
 
             case 'OP_NOP':
             case 'OP_NOP1': case 'OP_NOP2': case 'OP_NOP3': case 'OP_NOP4': case 'OP_NOP5':
             case 'OP_NOP6': case 'OP_NOP7': case 'OP_NOP8': case 'OP_NOP9': case 'OP_NOP10':
+            break;
+
+            case 'OP_IF':
+            case 'OP_NOTIF':
+                if(empty($this->mainStack))
+                    return false;
+                $vch = $this->popFromMainStack();
+                $fValue = $this->castToBool($vch);
+                if($opCode == 'OP_NOTIF')
+                    $fValue = !$fValue;
+                array_push($this->vfExec, $fValue);
+                $nextPosition = $position + 1;
+            break;
+
+            case 'OP_ELSE':
+                if (empty($this->vfExec))
+                    return false;
+                $this->vfExec[0] = !$this->vfExec[0];
+            break;
+
+            case 'OP_ENDIF':
+                if (empty($this->vfExec))
+                    return false;
+                array_pop($this->vfExec);
+            break;
+
+            case 'OP_VERIFY':
+                if (empty($this->mainStack))
+                    return false;
+                if(false == $this->castToBool($this->popFromMainStack()))
+                    return false;
+            break;
+
+            case 'OP_RETURN':
+                return false;
             break;
         }
     }
 
     public function popFromMainStack()
     {
-        array_pop($this->mainStack);
+        return array_pop($this->mainStack);
     }
 
     public function popFromAltStack()
     {
-        array_pop($this->altStack);
+        return array_pop($this->altStack);
     }
 
     public function pushOnMainStack($entry, $type)
@@ -236,6 +281,14 @@ class BitcoinScript
     public function pushOnAlStack($entry, $type)
     {
         array_push($this->altStack, array($entry, $type));
+    }
+
+    public function castToBool($value)
+    {
+        if($value)
+            return true;
+        else
+            return false;
     }
 
 }
