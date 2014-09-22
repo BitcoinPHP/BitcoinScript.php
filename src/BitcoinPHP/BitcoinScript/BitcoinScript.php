@@ -242,12 +242,14 @@ class BitcoinScript
                 if (empty($this->vfExec))
                     return false;
                 $this->vfExec[0] = !$this->vfExec[0];
+                $nextPosition = $position + 1;
             break;
 
             case 'OP_ENDIF':
                 if (empty($this->vfExec))
                     return false;
                 array_pop($this->vfExec);
+                $nextPosition = $position + 1;
             break;
 
             case 'OP_VERIFY':
@@ -255,11 +257,67 @@ class BitcoinScript
                     return false;
                 if(false == $this->castToBool($this->popFromMainStack()))
                     return false;
+                $nextPosition = $position + 1;
             break;
 
             case 'OP_RETURN':
                 return false;
             break;
+
+            case 'OP_TOALTSTACK':
+                if (empty($this->mainStack))
+                    return false;
+                $this->pushOnAlStack($this->popFromMainStack());
+                $nextPosition = $position + 1;
+            break;
+
+            case 'OP_FROMALTSTACK':
+                if (empty($this->altStack))
+                    return false;
+                $this->pushOnMainStack($this->popFromAltStack());
+                $nextPosition = $position + 1;
+            break;
+
+            case 'OP_2DROP':
+                if (count($this->mainStack) < 2)
+                    return false;
+                $this->popFromMainStack();
+                $this->popFromMainStack();
+                $nextPosition = $position + 1;
+            break;
+
+            case 'OP_2DUP':
+                if (count($this->mainStack) < 2)
+                    return false;
+                $vch1 = $this->stacktop(-2);
+                $vch2 = $this->stacktop(-1);
+                $this->pushOnMainStack($vch1);
+                $this->pushOnMainStack($vch2);
+                $nextPosition = $position + 1;
+            break;
+
+            case 'OP_3DUP':
+                if (count($this->mainStack) < 3)
+                    return false;
+                $vch1 = $this->stacktop(-3);
+                $vch2 = $this->stacktop(-2);
+                $vch3 = $this->stacktop(-1);
+                $this->pushOnMainStack($vch1);
+                $this->pushOnMainStack($vch2);
+                $this->pushOnMainStack($vch3);
+                $nextPosition = $position + 1;
+            break;
+
+            case 'OP_2OVER':
+                if (count($this->mainStack) < 4)
+                    return false;
+                $vch1 = $this->stacktop(-4);
+                $vch2 = $this->stacktop(-3);
+                $this->pushOnMainStack($vch1);
+                $this->pushOnMainStack($vch2);
+                $nextPosition = $position + 1;
+            break;
+
         }
     }
 
@@ -273,14 +331,24 @@ class BitcoinScript
         return array_pop($this->altStack);
     }
 
-    public function pushOnMainStack($entry, $type)
+    public function pushOnMainStack($entry)
     {
-        array_push($this->mainStack, array($entry, $type));
+        array_push($this->mainStack, $entry);
     }
 
-    public function pushOnAlStack($entry, $type)
+    public function pushOnAlStack($entry)
     {
-        array_push($this->altStack, array($entry, $type));
+        array_push($this->altStack, $entry);
+    }
+
+    public function stacktop($pos)
+    {
+        return $this->mainStack[$pos*-1];
+    }
+
+    public function altStacktop($pos)
+    {
+        return $this->altStack[$pos*-1];
     }
 
     public function castToBool($value)
