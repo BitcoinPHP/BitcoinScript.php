@@ -180,7 +180,8 @@ class BitcoinScript
     public function executeOpCode($position = 0, $continue = true)
     {
         $nextPosition = 0;
-        $opCode = $this->rOpCodes[ord(substr($this->script, $position, 1))];
+        $rOpCode = ord(substr($this->script, $position, 1));
+        $opCode = $this->rOpCodes[$rOpCode];
         switch($opCode)
         {
 
@@ -218,7 +219,10 @@ class BitcoinScript
             case 'OP_14':
             case 'OP_15':
             case 'OP_16':
-                //??
+                // ( -- value)
+                $bn =$rOpCode - $this->opCodes['OP_1'] - 1;
+                $this->pushOnMainStack($bn);
+                $nextPosition = $position + 1;
             break;
 
             case 'OP_NOP':
@@ -426,39 +430,57 @@ class BitcoinScript
                 //  x2 x3 x1  after second swap
                 if (count($this->mainStack) < 3)
                     return false;
-                swap(stacktop(-3), stacktop(-2));
-                swap(stacktop(-2), stacktop(-1));
+
+                //first swap
+                $vch1 = $this->stacktop(-3);
+                $vch2 = $this->stacktop(-2);
+                $this->setOnMainStack($vch1, -2);
+                $this->setOnMainStack($vch2, -3);
+
+                //second swap
+                //first swap
+                $vch1 = $this->stacktop(-2);
+                $vch2 = $this->stacktop(-1);
+                $this->setOnMainStack($vch1, -1);
+                $this->setOnMainStack($vch2, -2);
+
+                $nextPosition = $position + 1;
             break;
 
             case 'OP_SWAP':
-            {
                 // (x1 x2 -- x2 x1)
-                if (stack.size() < 2)
+                if (count($this->mainStack) < 2)
                     return false;
-                swap(stacktop(-2), stacktop(-1));
-            }
-                break;
+
+                $vch1 = $this->stacktop(-1);
+                $vch2 = $this->stacktop(-2);
+                $this->setOnMainStack($vch1, -2);
+                $this->setOnMainStack($vch2, -1);
+
+                $nextPosition = $position + 1;
+            break;
 
             case 'OP_TUCK':
-            {
                 // (x1 x2 -- x2 x1 x2)
-                if (stack.size() < 2)
+                if (count($this->mainStack) < 2)
                     return false;
-                valtype vch = stacktop(-1);
-                    stack.insert(stack.end()-2, vch);
-                }
-                break;
+                $vch = $this->stacktop(-1);
+                $this->setOnMainStack($vch, -2);
+
+                $nextPosition = $position + 1;
+            break;
 
 
             case 'OP_SIZE':
-            {
                 // (in -- in size)
-                if (stack.size() < 1)
+                if (count($this->mainStack) < 1)
                     return false;
-                CScriptNum bn(stacktop(-1).size());
-                    stack.push_back(bn.getvch());
-                }
-                break;
+
+                $size = strlen($this->stacktop(-1));
+                $this->pushOnMainStack($size);
+
+                $nextPosition = $position + 1;
+            break;
 
 
             //
@@ -469,7 +491,7 @@ class BitcoinScript
                 //case OP_NOTEQUAL: // use OP_NUMNOTEQUAL
             {
                 // (x1 x2 - bool)
-                if (stack.size() < 2)
+                if (count($this->mainStack) < 2)
                     return false;
                 valtype& vch1 = stacktop(-2);
                 valtype& vch2 = stacktop(-1);
@@ -640,22 +662,22 @@ class BitcoinScript
 
     public function eraseFromMainStack($pos)
     {
-        unset($this->mainStack[count($this->mainStack) + $pos]);
+        unset($this->mainStack[count($this->mainStack) + $pos - 1]);
     }
 
     public function eraseFromAltStack($pos)
     {
-        unset($this->altStack[count($this->altStack) + $pos]);
+        unset($this->altStack[count($this->altStack) + $pos - 1]);
     }
 
     public function setOnMainStack($value, $pos)
     {
-        $this->mainStack[count($this->mainStack) + $pos] = $value;
+        $this->mainStack[count($this->mainStack) + $pos - 1] = $value;
     }
 
     public function setOnAltStack($value, $pos)
     {
-        $this->altStack[count($this->altStack) + $pos] = $value;
+        $this->altStack[count($this->altStack) + $pos - 1] = $value;
     }
 
     public function pushOnMainStack($entry)
@@ -670,17 +692,12 @@ class BitcoinScript
 
     public function stacktop($pos)
     {
-        return $this->mainStack[count($this->mainStack) + $pos];
+        return $this->mainStack[count($this->mainStack) + $pos - 1];
     }
 
     public function altStacktop($pos)
     {
-        return $this->altStack[count($this->altStack) + $pos];
-    }
-
-    public function eraseStack($pos)
-    {
-        return $this->altStack[count($this->altStack) + $pos];
+        return $this->altStack[count($this->altStack) + $pos - 1];
     }
 
     public function castToBool($value)
