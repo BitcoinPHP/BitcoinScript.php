@@ -13,10 +13,16 @@ class ScriptBuilder
 {
     private $interpreter;
     private $script = array();
+    private $opCodes;
+    private $rOpCodes;
 
-    public function __construct()
+    /**
+     * @param OpCodes $opCodes
+     */
+    public function __construct($opCodes)
     {
-
+        $this->opCodes = $opCodes->getOpcodes();
+        $this->rOpCodes = $opCodes->getRopCodes();
     }
 
     /**

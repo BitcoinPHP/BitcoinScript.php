@@ -36,7 +36,7 @@ class Interpreter
     public function __construct($opCodes)
     {
         $this->opCodes = $opCodes->getOpcodes();
-
+        $this->rOpCodes = $opCodes->getRopCodes();
     }
 
     public function setScript($script)
@@ -51,7 +51,6 @@ class Interpreter
 
     public function evalScript()
     {
-        $position = 0;
         do {
             $position = $this->executeOpCode();
         } while($position);
