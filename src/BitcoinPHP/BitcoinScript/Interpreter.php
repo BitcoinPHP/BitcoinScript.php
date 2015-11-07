@@ -20,6 +20,35 @@ class Interpreter
 
     private $rOpCodes = array();
 
+    /**
+     * @param OpCodes $opCodes
+     */
+    public function __construct($opCodes)
+    {
+        $this->opCodes = $opCodes->getOpcodes();
+        $this->rOpCodes = $opCodes->getRopCodes();
+    }
+
+    /***
+     * Convert a number to a compact Int
+     * taken from https://github.com/scintill/php-bitcoin-signature-routines/blob/master/verifymessage.php
+     *
+     * @param $i
+     * @return string
+     * @throws \Exception
+     */
+    public function numToVarIntString($i) {
+        if ($i < 0xfd) {
+            return chr($i);
+        } else if ($i <= 0xffff) {
+            return pack('Cv', 0xfd, $i);
+        } else if ($i <= 0xffffffff) {
+            return pack('CV', 0xfe, $i);
+        } else {
+            throw new \Exception('int too large');
+        }
+    }
+
     public function getOpCodes()
     {
         return $this->opCodes;
@@ -28,15 +57,6 @@ class Interpreter
     public function getrOpCodes()
     {
         return $this->rOpCodes;
-    }
-
-    /**
-     * @param OpCodes $opCodes
-     */
-    public function __construct($opCodes)
-    {
-        $this->opCodes = $opCodes->getOpcodes();
-        $this->rOpCodes = $opCodes->getRopCodes();
     }
 
     public function setScript($script)

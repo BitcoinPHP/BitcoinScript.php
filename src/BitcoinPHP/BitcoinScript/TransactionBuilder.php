@@ -44,6 +44,11 @@ class TransactionBuilder
 
     }
 
+    public function getHexTransaction()
+    {
+
+    }
+
     public function getRawTransaction()
     {
 

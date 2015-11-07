@@ -12,6 +12,7 @@ class OpCodes
     const OP_0 = 'OP_0';
     const OP_PUSHDATA1 = 'OP_PUSHDATA1';
     const OP_PUSHDATA2 = 'OP_PUSHDATA2';
+    const OP_PUSHDATA3 = 'OP_PUSHDATA3';
     const OP_PUSHDATA4 = 'OP_PUSHDATA4';
     const OP_1NEGATE = 'OP_1NEGATE';
     const OP_RESERVED = 'OP_RESERVED';

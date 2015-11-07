@@ -36,10 +36,13 @@ class ScriptBuilder
     /**
      * @param string $opCode
      * @return $this
+     * @throws \Exception
      */
     public function addOpCode($opCode)
     {
-        array_push($this->script, $opCode);
+        if(!isset($this->opCodes[$opCode]))
+            throw new \Exception('Opcode not found : ' . $opCode);
+        array_push($this->script, array('opCode' => $opCode));
         return $this;
     }
 
@@ -47,13 +50,52 @@ class ScriptBuilder
      * @param string $data
      * @return $this
      */
-    public function addData($data)
+    public function pushData($data)
     {
-        array_push($this->script, $data);
+        $dataLength = $this->interpreter->numToVarIntString(strlen($data));
+
+        switch(strlen($dataLength))
+        {
+            case 0:
+                return $this;
+
+            case 1:
+                array_push($this->script, array('opCode' => OpCodes::OP_PUSHDATA1));
+            break;
+
+            case 2:
+                array_push($this->script, array('opCode' => OpCodes::OP_PUSHDATA2));
+            break;
+
+            case 3:
+                array_push($this->script, array('opCode' => OpCodes::OP_PUSHDATA3));
+            break;
+        }
+
+        array_push($this->script, array('bin' => $dataLength));
+        array_push($this->script, array('bin' => $data));
         return $this;
     }
 
+    /**
+     * @param string $data
+     * @return $this
+     */
+    public function pushHexData($data)
+    {
+        $data = hex2bin($data);
+        return $this->pushData($data);
+    }
+
+    /**
+     * @return array
+     */
     public function getScript()
+    {
+        return $this->script;
+    }
+
+    public function getHexScript()
     {
 
     }
@@ -61,5 +103,19 @@ class ScriptBuilder
     public function getRawScript()
     {
 
+    }
+
+    public function dumpScript()
+    {
+        foreach($this->script as $scriptElement)
+        {
+            if(is_array($scriptElement) && isset($scriptElement['opCode']))
+                $dump =  '<' . $scriptElement['opCode'] . '>';
+            if(is_array($scriptElement) && isset($scriptElement['bin']))
+                $dump = '<0x' . bin2hex($scriptElement['bin']) . '>';
+
+            if(isset($dump))
+                echo $dump . ' ';
+        }
     }
 }
