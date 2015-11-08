@@ -10,7 +10,6 @@ namespace BitcoinPHP\BitcoinScript;
 
 class Interpreter
 {
-
     private $vfExec = array();
     private $mainStack = array();
     private $altStack = array();
@@ -37,7 +36,8 @@ class Interpreter
      * @return string
      * @throws \Exception
      */
-    public function numToVarIntString($i) {
+    public function numToVarIntString($i)
+    {
         if ($i < 0xfd) {
             return chr($i);
         } else if ($i <= 0xffff) {
@@ -73,7 +73,7 @@ class Interpreter
     {
         do {
             $position = $this->executeOpCode();
-        } while($position);
+        } while ($position);
     }
 
     public function executeOpCode($position = 0)
@@ -81,8 +81,7 @@ class Interpreter
         $nextPosition = 0;
         $rOpCode = ord(substr($this->script, $position, 1));
         $opCode = $this->rOpCodes[$rOpCode];
-        switch($opCode)
-        {
+        switch ($opCode) {
 
             case OpCodes::OP_CAT:
             case OpCodes::OP_SUBSTR:
@@ -119,67 +118,75 @@ class Interpreter
             case OpCodes::OP_15:
             case OpCodes::OP_16:
                 // ( -- value)
-                $bn =$rOpCode - $this->opCodes['OP_1'] - 1;
-                $this->pushOnMainStack(substr($this->script, $position +1, $bn));
+                $bn = $rOpCode - $this->opCodes['OP_1'] - 1;
+                $this->pushOnMainStack(substr($this->script, $position + 1, $bn));
                 $nextPosition = $this->nextPosition($position, 1 + $bn);
-            break;
+                break;
 
             case OpCodes::OP_NOP:
-            case OpCodes::OP_NOP1: case OpCodes::OP_NOP2: case OpCodes::OP_NOP3: case OpCodes::OP_NOP4: case OpCodes::OP_NOP5:
-            case OpCodes::OP_NOP6: case OpCodes::OP_NOP7: case OpCodes::OP_NOP8: case OpCodes::OP_NOP9: case OpCodes::OP_NOP10:
-            break;
+            case OpCodes::OP_NOP1:
+            case OpCodes::OP_NOP2:
+            case OpCodes::OP_NOP3:
+            case OpCodes::OP_NOP4:
+            case OpCodes::OP_NOP5:
+            case OpCodes::OP_NOP6:
+            case OpCodes::OP_NOP7:
+            case OpCodes::OP_NOP8:
+            case OpCodes::OP_NOP9:
+            case OpCodes::OP_NOP10:
+                break;
 
             case OpCodes::OP_IF:
             case OpCodes::OP_NOTIF:
-                if(empty($this->mainStack))
+                if (empty($this->mainStack))
                     return false;
                 $vch = $this->popFromMainStack();
                 $fValue = $this->castToBool($vch);
-                if($opCode == 'OP_NOTIF')
+                if ($opCode == 'OP_NOTIF')
                     $fValue = !$fValue;
                 array_push($this->vfExec, $fValue);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_ELSE:
                 if (empty($this->vfExec))
                     return false;
                 $this->vfExec[0] = !$this->vfExec[0];
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_ENDIF:
                 if (empty($this->vfExec))
                     return false;
                 array_pop($this->vfExec);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_VERIFY:
                 if (empty($this->mainStack))
                     return false;
-                if(false == $this->castToBool($this->popFromMainStack()))
+                if (false == $this->castToBool($this->popFromMainStack()))
                     return false;
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_RETURN:
                 return false;
-            break;
+                break;
 
             case OpCodes::OP_TOALTSTACK:
                 if (empty($this->mainStack))
                     return false;
                 $this->pushOnAlStack($this->popFromMainStack());
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_FROMALTSTACK:
                 if (empty($this->altStack))
                     return false;
                 $this->pushOnMainStack($this->popFromAltStack());
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_2DROP:
                 // (x1 x2 -- )
@@ -188,7 +195,7 @@ class Interpreter
                 $this->popFromMainStack();
                 $this->popFromMainStack();
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_2DUP:
                 // (x1 x2 -- x1 x2 x1 x2)
@@ -199,7 +206,7 @@ class Interpreter
                 $this->pushOnMainStack($vch1);
                 $this->pushOnMainStack($vch2);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_3DUP:
                 // (x1 x2 x3 -- x1 x2 x3 x1 x2 x3)
@@ -212,7 +219,7 @@ class Interpreter
                 $this->pushOnMainStack($vch2);
                 $this->pushOnMainStack($vch3);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_2OVER:
                 // (x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2)
@@ -223,7 +230,7 @@ class Interpreter
                 $this->pushOnMainStack($vch1);
                 $this->pushOnMainStack($vch2);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
 
             case OpCodes::OP_2ROT:
@@ -238,7 +245,7 @@ class Interpreter
                 $this->pushOnMainStack($vch1);
                 $this->pushOnMainStack($vch2);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_2SWAP:
                 // (x1 x2 x3 x4 -- x3 x4 x1 x2)
@@ -254,23 +261,23 @@ class Interpreter
                 $this->setOnMainStack($vch1, -3);
                 $this->setOnMainStack($vch2, -1);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_IFDUP:
                 // (x - 0 | x x)
                 if (count($this->mainStack) < 1)
                     return false;
                 $vch = $this->stacktop(-1);
-                if($this->castToBool($vch))
+                if ($this->castToBool($vch))
                     $this->pushOnMainStack($vch);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_DEPTH:
                 // -- stacksize
                 $this->pushOnMainStack(count($this->mainStack));
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_DROP:
                 // (x -- )
@@ -278,7 +285,7 @@ class Interpreter
                     return false;
                 $this->popFromMainStack();
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_DUP:
                 // (x -- x x)
@@ -287,7 +294,7 @@ class Interpreter
                 $vch = $this->stacktop(-1);
                 $this->pushOnMainStack($vch);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_NIP:
                 // (x1 x2 -- x2)
@@ -295,7 +302,7 @@ class Interpreter
                     return false;
                 $this->eraseFromMainStack(-2);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_OVER:
                 // (x1 x2 -- x1 x2 x1)
@@ -304,7 +311,7 @@ class Interpreter
                 $vch = $this->stacktop(-2);
                 $this->pushOnMainStack($vch);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_PICK:
             case OpCodes::OP_ROLL:
@@ -316,12 +323,12 @@ class Interpreter
                 $this->popFromMainStack();
                 if ($n < 0 || $n >= count($this->mainStack))
                     return false;
-                $vch = $this->stacktop(-$n-1);
+                $vch = $this->stacktop(-$n - 1);
                 if ($opCode == 'OP_ROLL')
-                    $this->eraseFromMainStack(-$n-1);
+                    $this->eraseFromMainStack(-$n - 1);
                 $this->pushOnMainStack($vch);
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_ROT:
                 // (x1 x2 x3 -- x2 x3 x1)
@@ -344,7 +351,7 @@ class Interpreter
                 $this->setOnMainStack($vch2, -2);
 
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_SWAP:
                 // (x1 x2 -- x2 x1)
@@ -357,7 +364,7 @@ class Interpreter
                 $this->setOnMainStack($vch2, -1);
 
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
             case OpCodes::OP_TUCK:
                 // (x1 x2 -- x2 x1 x2)
@@ -367,7 +374,7 @@ class Interpreter
                 $this->setOnMainStack($vch, -2);
 
                 $nextPosition = $this->nextPosition($position);
-            break;
+                break;
 
 
             case OpCodes::OP_SIZE:
@@ -379,173 +386,170 @@ class Interpreter
                 $this->pushOnMainStack($size);
 
                 $nextPosition = $this->nextPosition($position);
-            break;
-
-/*
-            //
-            // Bitwise logic
-            //
-            case 'OP_EQUAL':
-            case 'OP_EQUALVERIFY':
-                //case OP_NOTEQUAL: // use OP_NUMNOTEQUAL
-            {
-                // (x1 x2 - bool)
-                if (count($this->mainStack) < 2)
-                    return false;
-                valtype& vch1 = stacktop(-2);
-                valtype& vch2 = stacktop(-1);
-                bool fEqual = (vch1 == vch2);
-                    // OP_NOTEQUAL is disabled because it would be too easy to say
-                    // something like n != 1 and have some wiseguy pass in 1 with extra
-                    // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
-                    //if (opcode == OP_NOTEQUAL)
-                    //    fEqual = !fEqual;
-                    popstack(stack);
-                    popstack(stack);
-                    stack.push_back(fEqual ? vchTrue : vchFalse);
-                    if (opcode == OP_EQUALVERIFY)
-                    {
-                        if (fEqual)
-                            popstack(stack);
-                        else
-                            return false;
-                    }
-                }
                 break;
 
-
-            //
-            // Numeric
-            //
-            case 'OP_1ADD':
-            case 'OP_1SUB':
-            case 'OP_NEGATE':
-            case 'OP_ABS':
-            case 'OP_NOT':
-            case 'OP_0NOTEQUAL':
-            {
-                // (in -- out)
-                if (stack.size() < 1)
-                    return false;
-                CScriptNum bn(stacktop(-1));
-                    switch (opcode)
-                    {
-                        case OP_1ADD:       bn += bnOne; break;
-                        case OP_1SUB:       bn -= bnOne; break;
-                        case OP_NEGATE:     bn = -bn; break;
-                        case OP_ABS:        if (bn < bnZero) bn = -bn; break;
-                        case OP_NOT:        bn = (bn == bnZero); break;
-                        case OP_0NOTEQUAL:  bn = (bn != bnZero); break;
-                        default:            assert(!"invalid opcode"); break;
-                    }
-                    popstack(stack);
-                    stack.push_back(bn.getvch());
-                }
-                break;
-
-            case 'OP_ADD':
-            case 'OP_SUB':
-            case 'OP_BOOLAND':
-            case 'OP_BOOLOR':
-            case 'OP_NUMEQUAL':
-            case 'OP_NUMEQUALVERIFY':
-            case 'OP_NUMNOTEQUAL':
-            case 'OP_LESSTHAN':
-            case 'OP_GREATERTHAN':
-            case 'OP_LESSTHANOREQUAL':
-            case 'OP_GREATERTHANOREQUAL':
-            case 'OP_MIN':
-            case 'OP_MAX':
-            {
-                // (x1 x2 -- out)
-                if (stack.size() < 2)
-                    return false;
-                CScriptNum bn1(stacktop(-2));
-                    CScriptNum bn2(stacktop(-1));
-                    CScriptNum bn(0);
-                    switch (opcode)
-                    {
-                        case OP_ADD:
-                            bn = bn1 + bn2;
+            /*
+                        //
+                        // Bitwise logic
+                        //
+                        case 'OP_EQUAL':
+                        case 'OP_EQUALVERIFY':
+                            //case OP_NOTEQUAL: // use OP_NUMNOTEQUAL
+                        {
+                            // (x1 x2 - bool)
+                            if (count($this->mainStack) < 2)
+                                return false;
+                            valtype& vch1 = stacktop(-2);
+                            valtype& vch2 = stacktop(-1);
+                            bool fEqual = (vch1 == vch2);
+                                // OP_NOTEQUAL is disabled because it would be too easy to say
+                                // something like n != 1 and have some wiseguy pass in 1 with extra
+                                // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
+                                //if (opcode == OP_NOTEQUAL)
+                                //    fEqual = !fEqual;
+                                popstack(stack);
+                                popstack(stack);
+                                stack.push_back(fEqual ? vchTrue : vchFalse);
+                                if (opcode == OP_EQUALVERIFY)
+                                {
+                                    if (fEqual)
+                                        popstack(stack);
+                                    else
+                                        return false;
+                                }
+                            }
                             break;
 
-                        case OP_SUB:
-                            bn = bn1 - bn2;
+
+                        //
+                        // Numeric
+                        //
+                        case 'OP_1ADD':
+                        case 'OP_1SUB':
+                        case 'OP_NEGATE':
+                        case 'OP_ABS':
+                        case 'OP_NOT':
+                        case 'OP_0NOTEQUAL':
+                        {
+                            // (in -- out)
+                            if (stack.size() < 1)
+                                return false;
+                            CScriptNum bn(stacktop(-1));
+                                switch (opcode)
+                                {
+                                    case OP_1ADD:       bn += bnOne; break;
+                                    case OP_1SUB:       bn -= bnOne; break;
+                                    case OP_NEGATE:     bn = -bn; break;
+                                    case OP_ABS:        if (bn < bnZero) bn = -bn; break;
+                                    case OP_NOT:        bn = (bn == bnZero); break;
+                                    case OP_0NOTEQUAL:  bn = (bn != bnZero); break;
+                                    default:            assert(!"invalid opcode"); break;
+                                }
+                                popstack(stack);
+                                stack.push_back(bn.getvch());
+                            }
                             break;
 
-                        case OP_BOOLAND:             bn = (bn1 != bnZero && bn2 != bnZero); break;
-                        case OP_BOOLOR:              bn = (bn1 != bnZero || bn2 != bnZero); break;
-                        case OP_NUMEQUAL:            bn = (bn1 == bn2); break;
-                        case OP_NUMEQUALVERIFY:      bn = (bn1 == bn2); break;
-                        case OP_NUMNOTEQUAL:         bn = (bn1 != bn2); break;
-                        case OP_LESSTHAN:            bn = (bn1 < bn2); break;
-                        case OP_GREATERTHAN:         bn = (bn1 > bn2); break;
-                        case OP_LESSTHANOREQUAL:     bn = (bn1 <= bn2); break;
-                        case OP_GREATERTHANOREQUAL:  bn = (bn1 >= bn2); break;
-                        case OP_MIN:                 bn = (bn1 < bn2 ? bn1 : bn2); break;
-                        case OP_MAX:                 bn = (bn1 > bn2 ? bn1 : bn2); break;
-                        default:                     assert(!"invalid opcode"); break;
-                    }
-                    popstack(stack);
-                    popstack(stack);
-                    stack.push_back(bn.getvch());
+                        case 'OP_ADD':
+                        case 'OP_SUB':
+                        case 'OP_BOOLAND':
+                        case 'OP_BOOLOR':
+                        case 'OP_NUMEQUAL':
+                        case 'OP_NUMEQUALVERIFY':
+                        case 'OP_NUMNOTEQUAL':
+                        case 'OP_LESSTHAN':
+                        case 'OP_GREATERTHAN':
+                        case 'OP_LESSTHANOREQUAL':
+                        case 'OP_GREATERTHANOREQUAL':
+                        case 'OP_MIN':
+                        case 'OP_MAX':
+                        {
+                            // (x1 x2 -- out)
+                            if (stack.size() < 2)
+                                return false;
+                            CScriptNum bn1(stacktop(-2));
+                                CScriptNum bn2(stacktop(-1));
+                                CScriptNum bn(0);
+                                switch (opcode)
+                                {
+                                    case OP_ADD:
+                                        bn = bn1 + bn2;
+                                        break;
 
-                    if (opcode == OP_NUMEQUALVERIFY)
-                    {
-                        if (CastToBool(stacktop(-1)))
-                            popstack(stack);
-                        else
-                            return false;
-                    }
-                }
-                break;
+                                    case OP_SUB:
+                                        bn = bn1 - bn2;
+                                        break;
 
-            case 'OP_WITHIN':
-            {
-                // (x min max -- out)
-                if (stack.size() < 3)
-                    return false;
-                CScriptNum bn1(stacktop(-3));
-                    CScriptNum bn2(stacktop(-2));
-                    CScriptNum bn3(stacktop(-1));
-                    bool fValue = (bn2 <= bn1 && bn1 < bn3);
-                    popstack(stack);
-                    popstack(stack);
-                    popstack(stack);
-                    stack.push_back(fValue ? vchTrue : vchFalse);
-                }
-                break;
+                                    case OP_BOOLAND:             bn = (bn1 != bnZero && bn2 != bnZero); break;
+                                    case OP_BOOLOR:              bn = (bn1 != bnZero || bn2 != bnZero); break;
+                                    case OP_NUMEQUAL:            bn = (bn1 == bn2); break;
+                                    case OP_NUMEQUALVERIFY:      bn = (bn1 == bn2); break;
+                                    case OP_NUMNOTEQUAL:         bn = (bn1 != bn2); break;
+                                    case OP_LESSTHAN:            bn = (bn1 < bn2); break;
+                                    case OP_GREATERTHAN:         bn = (bn1 > bn2); break;
+                                    case OP_LESSTHANOREQUAL:     bn = (bn1 <= bn2); break;
+                                    case OP_GREATERTHANOREQUAL:  bn = (bn1 >= bn2); break;
+                                    case OP_MIN:                 bn = (bn1 < bn2 ? bn1 : bn2); break;
+                                    case OP_MAX:                 bn = (bn1 > bn2 ? bn1 : bn2); break;
+                                    default:                     assert(!"invalid opcode"); break;
+                                }
+                                popstack(stack);
+                                popstack(stack);
+                                stack.push_back(bn.getvch());
 
+                                if (opcode == OP_NUMEQUALVERIFY)
+                                {
+                                    if (CastToBool(stacktop(-1)))
+                                        popstack(stack);
+                                    else
+                                        return false;
+                                }
+                            }
+                            break;
 
+                        case 'OP_WITHIN':
+                        {
+                            // (x min max -- out)
+                            if (stack.size() < 3)
+                                return false;
+                            CScriptNum bn1(stacktop(-3));
+                                CScriptNum bn2(stacktop(-2));
+                                CScriptNum bn3(stacktop(-1));
+                                bool fValue = (bn2 <= bn1 && bn1 < bn3);
+                                popstack(stack);
+                                popstack(stack);
+                                popstack(stack);
+                                stack.push_back(fValue ? vchTrue : vchFalse);
+                            }
+                            break;
+
+            */
             //
             // Crypto
             //
-            case 'OP_RIPEMD160':
-            case 'OP_SHA1':
-            case 'OP_SHA256':
-            case 'OP_HASH160':
-            case 'OP_HASH256':
-            {
-                // (in -- hash)
-                if (stack.size() < 1)
+            case OpCodes::OP_RIPEMD160:
+            case OpCodes::OP_SHA1:
+            case OpCodes::OP_SHA256:
+            case OpCodes::OP_HASH160:
+            case OpCodes::OP_HASH256: {
+                if (count($this->mainStack) < 1)
                     return false;
-                valtype& vch = stacktop(-1);
-                valtype vchHash((opcode == OP_RIPEMD160 || opcode == OP_SHA1 || opcode == OP_HASH160) ? 20 : 32);
-                    if (opcode == OP_RIPEMD160)
-                        CRIPEMD160().Write(begin_ptr(vch), vch.size()).Finalize(begin_ptr(vchHash));
-                    else if (opcode == OP_SHA1)
-                        CSHA1().Write(begin_ptr(vch), vch.size()).Finalize(begin_ptr(vchHash));
-                    else if (opcode == OP_SHA256)
-                        CSHA256().Write(begin_ptr(vch), vch.size()).Finalize(begin_ptr(vchHash));
-                    else if (opcode == OP_HASH160)
-                        CHash160().Write(begin_ptr(vch), vch.size()).Finalize(begin_ptr(vchHash));
-                    else if (opcode == OP_HASH256)
-                        CHash256().Write(begin_ptr(vch), vch.size()).Finalize(begin_ptr(vchHash));
-                    popstack(stack);
-                    stack.push_back(vchHash);
-                }
+                $vch = $this->stacktop(-1);
+                $vchHash = '';
+                if ($opCode == OpCodes::OP_RIPEMD160)
+                    $vchHash = hex2bin(hash('ripemd160', $vch));
+                else if ($opCode == OpCodes::OP_SHA1)
+                    $vchHash = hex2bin(hash('sha1', $vch));
+                else if ($opCode == OpCodes::OP_SHA256)
+                    $vchHash = hex2bin(hash('sha256', $vch));
+                else if ($opCode == OpCodes::OP_HASH160)
+                    $vchHash = hex2bin(hash('ripemd160', hex2bin(hash('sha256', $vch))));
+                else if ($opCode == OpCodes::OP_HASH256)
+                    $vchHash = hex2bin(hash('sha256', hex2bin(hash('sha256', $vch))));
+                $this->popFromMainStack();
+                $this->pushOnMainStack($vchHash);
+            }
                 break;
-*/
         }
         return $nextPosition;
     }
@@ -611,7 +615,7 @@ class Interpreter
 
     public function castToBool($value)
     {
-        return (bool) $value;
+        return (bool)$value;
     }
 
     /**

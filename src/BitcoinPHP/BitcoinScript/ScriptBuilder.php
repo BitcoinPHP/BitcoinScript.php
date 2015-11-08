@@ -8,6 +8,7 @@
 
 namespace BitcoinPHP\BitcoinScript;
 
+use BitcoinPHP\BitcoinScript\Interpreter;
 
 class ScriptBuilder
 {
@@ -95,14 +96,28 @@ class ScriptBuilder
         return $this->script;
     }
 
+    /**
+     * @return string
+     */
     public function getHexScript()
     {
-
+        return bin2hex($this->getRawScript());
     }
 
+    /**
+     * @return string
+     */
     public function getRawScript()
     {
-
+        $script = '';
+        foreach($this->script as $scriptElement)
+        {
+            if(is_array($scriptElement) && isset($scriptElement['opCode']))
+                $script .= chr($this->opCodes[$scriptElement['opCode']]);
+            if(is_array($scriptElement) && isset($scriptElement['bin']))
+                $script .= $scriptElement['bin'];
+        }
+        return $script;
     }
 
     public function dumpScript()
