@@ -54,7 +54,7 @@ class ScriptBuilder
     public function pushData($data)
     {
         $dataLength = $this->interpreter->numToVarIntString(strlen($data));
-
+        //TODO use OP_1,2,3...16 for optimizing script size
         switch(strlen($dataLength))
         {
             case 0:
