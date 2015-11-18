@@ -28,7 +28,7 @@ class Interpreter
         $this->rOpCodes = $opCodes->getRopCodes();
     }
 
-    /***
+    /**
      * Convert a number to a compact Int
      * taken from https://github.com/scintill/php-bitcoin-signature-routines/blob/master/verifymessage.php
      *
@@ -47,6 +47,23 @@ class Interpreter
         } else {
             throw new \Exception('int too large');
         }
+    }
+
+    public function pushSizeStringToInt($size)
+    {
+        if(strlen($size) == 1) // 8 bits
+            return ord($size);
+        elseif(strlen($size) == 2) // 16 bits
+            return unpack('v', $size)[1];
+        elseif(strlen($size) == 3) // 24 bits
+        { // according to http://stackoverflow.com/a/11732142/2652054
+            $return = unpack('ca/ab/cc', $size);
+            return $return['a'] + ($return['b'] << 8) + ($return['c'] << 16);
+        }
+        elseif(strlen($size) == 4) // 32 bits
+            return unpack('V', $size)[1];
+        else
+            throw new \Exception('invalid size');
     }
 
     public function getOpCodes()
@@ -69,10 +86,18 @@ class Interpreter
         $this->script = hex2bin($script);
     }
 
-    public function evalScript()
+    public function evalScript($verbose = false)
     {
         do {
             $position = $this->executeOpCode();
+            if($verbose)
+            {
+                echo 'Main stack: ';
+                $this->dumpMainStack();
+                echo "\n";
+                echo 'Main altstack: ';
+                $this->dumpAltStack();
+            }
         } while ($position);
     }
 
@@ -82,6 +107,28 @@ class Interpreter
         $rOpCode = ord(substr($this->script, $position, 1));
         $opCode = $this->rOpCodes[$rOpCode];
         switch ($opCode) {
+            case OpCodes::OP_PUSHDATA1:
+            case OpCodes::OP_PUSHDATA2:
+            case OpCodes::OP_PUSHDATA3:
+            case OpCodes::OP_PUSHDATA4:
+                $pushSizeLength = 0;
+
+                if($opCode == OpCodes::OP_PUSHDATA1)
+                    $pushSizeLength = 1;
+
+                if($opCode == OpCodes::OP_PUSHDATA1)
+                    $pushSizeLength = 2;
+
+                if($opCode == OpCodes::OP_PUSHDATA1)
+                    $pushSizeLength = 3;
+
+                if($opCode == OpCodes::OP_PUSHDATA1)
+                    $pushSizeLength = 4;
+
+                $pushLength = $this->pushSizeStringToInt(substr($this->script, $position + 1, $pushSizeLength));
+                $this->pushOnMainStack(substr($this->script, $position + 1 + $pushSizeLength, $pushLength));
+                $nextPosition = $this->nextPosition($position, 1 + $pushSizeLength + $pushLength);
+                break;
 
             case OpCodes::OP_CAT:
             case OpCodes::OP_SUBSTR:
@@ -524,6 +571,7 @@ class Interpreter
                             break;
 
             */
+
             //
             // Crypto
             //
