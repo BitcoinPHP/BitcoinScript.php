@@ -95,7 +95,7 @@ class ScriptBuilder
                 else if(ord($data) === 16)
                     array_push($this->script, array('opCode' => OpCodes::OP_16));
                 if(ord($data) < 17)
-                    break;
+                    return $this;
                 array_push($this->script, array('opCode' => OpCodes::OP_PUSHDATA1));
             break;
 
@@ -113,9 +113,16 @@ class ScriptBuilder
         return $this;
     }
 
+    /**
+     * @param int $number
+     * @return $this
+     */
     public function pushNumber($number)
     {
-        //@TODO
+        $this->pushData(
+            $this->interpreter->numToVarIntString($number)
+        );
+        return $this;
     }
 
     /**

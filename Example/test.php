@@ -17,6 +17,9 @@ $scriptBuilder->setInterpreter($interpreter);
 
 $scriptBuilder->pushData('HELLO')
               ->pushData('HELLO2')
+              ->pushNumber(4)
+              ->pushNumber(2)
+              ->pushNumber(42)
               ->addOpCode(OpCodes::OP_EQUAL)
               ->addOpCode(OpCodes::OP_DROP)
               ->addOpCode(OpCodes::OP_DUP)
