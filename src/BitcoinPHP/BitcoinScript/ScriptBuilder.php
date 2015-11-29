@@ -60,42 +60,62 @@ class ScriptBuilder
             case 0:
                 return $this;
             case 1:
-                if(strlen($data) === 0)
-                    array_push($this->script, array('opCode' => OpCodes::OP_0));
-                else if(strlen($data) === 1)
-                    array_push($this->script, array('opCode' => OpCodes::OP_1));
-                else if(strlen($data) === 2)
-                    array_push($this->script, array('opCode' => OpCodes::OP_2));
-                else if(strlen($data) === 3)
-                    array_push($this->script, array('opCode' => OpCodes::OP_3));
-                else if(strlen($data) === 4)
-                    array_push($this->script, array('opCode' => OpCodes::OP_4));
-                else if(strlen($data) === 5)
-                    array_push($this->script, array('opCode' => OpCodes::OP_5));
-                else if(strlen($data) === 6)
-                    array_push($this->script, array('opCode' => OpCodes::OP_6));
-                else if(strlen($data) === 7)
-                    array_push($this->script, array('opCode' => OpCodes::OP_7));
-                else if(strlen($data) === 8)
-                    array_push($this->script, array('opCode' => OpCodes::OP_8));
-                else if(strlen($data) === 9)
-                    array_push($this->script, array('opCode' => OpCodes::OP_9));
-                else if(strlen($data) === 10)
-                    array_push($this->script, array('opCode' => OpCodes::OP_10));
-                else if(strlen($data) === 11)
-                    array_push($this->script, array('opCode' => OpCodes::OP_11));
-                else if(strlen($data) === 12)
-                    array_push($this->script, array('opCode' => OpCodes::OP_12));
-                else if(strlen($data) === 13)
-                    array_push($this->script, array('opCode' => OpCodes::OP_13));
-                else if(strlen($data) === 14)
-                    array_push($this->script, array('opCode' => OpCodes::OP_14));
-                else if(strlen($data) === 15)
-                    array_push($this->script, array('opCode' => OpCodes::OP_15));
-                else if(strlen($data) === 16)
-                    array_push($this->script, array('opCode' => OpCodes::OP_16));
-                else
-                    array_push($this->script, array('opCode' => OpCodes::OP_PUSHDATA1));
+                switch($dataLength)
+                {
+                    case 0:
+                        array_push($this->script, array('opCode' => OpCodes::OP_0));
+                        break;
+                    case 1:
+                        array_push($this->script, array('opCode' => OpCodes::OP_1));
+                        break;
+                    case 2:
+                        array_push($this->script, array('opCode' => OpCodes::OP_2));
+                        break;
+                    case 3:
+                        array_push($this->script, array('opCode' => OpCodes::OP_3));
+                        break;
+                    case 4:
+                        array_push($this->script, array('opCode' => OpCodes::OP_4));
+                        break;
+                    case 5:
+                        array_push($this->script, array('opCode' => OpCodes::OP_5));
+                        break;
+                    case 6:
+                        array_push($this->script, array('opCode' => OpCodes::OP_6));
+                        break;
+                    case 7:
+                        array_push($this->script, array('opCode' => OpCodes::OP_7));
+                        break;
+                    case 8:
+                        array_push($this->script, array('opCode' => OpCodes::OP_8));
+                        break;
+                    case 9:
+                        array_push($this->script, array('opCode' => OpCodes::OP_9));
+                        break;
+                    case 10:
+                        array_push($this->script, array('opCode' => OpCodes::OP_10));
+                        break;
+                    case 11:
+                        array_push($this->script, array('opCode' => OpCodes::OP_11));
+                        break;
+                    case 12:
+                        array_push($this->script, array('opCode' => OpCodes::OP_12));
+                        break;
+                    case 13:
+                        array_push($this->script, array('opCode' => OpCodes::OP_13));
+                        break;
+                    case 14:
+                        array_push($this->script, array('opCode' => OpCodes::OP_14));
+                        break;
+                    case 15:
+                        array_push($this->script, array('opCode' => OpCodes::OP_15));
+                        break;
+                    case 16:
+                        array_push($this->script, array('opCode' => OpCodes::OP_16));
+                        break;
+                    default:
+                        array_push($this->script, array('opCode' => OpCodes::OP_PUSHDATA1));
+                }
             break;
 
             case 2:

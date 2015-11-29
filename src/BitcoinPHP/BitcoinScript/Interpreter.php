@@ -49,19 +49,27 @@ class Interpreter
         }
     }
 
-    public function pushSizeStringToInt($size)
+    public function varIntStringToInt($n)
     {
-        if(strlen($size) == 1) // 8 bits
-            return ord($size);
-        elseif(strlen($size) == 2) // 16 bits
-            return unpack('v', $size)[1];
-        elseif(strlen($size) == 3) // 24 bits
+        if(strlen($n) == 1) // 8 bits
+            return ord($n);
+        elseif(strlen($n) == 2) // 16 bits
+            return unpack('v', $n)[1];
+        elseif(strlen($n) == 3) // 24 bits
         { // according to http://stackoverflow.com/a/11732142/2652054
-            $return = unpack('ca/ab/cc', $size);
+            $return = unpack('ca/ab/cc', $n);
             return $return['a'] + ($return['b'] << 8) + ($return['c'] << 16);
         }
-        elseif(strlen($size) == 4) // 32 bits
-            return unpack('V', $size)[1];
+        elseif(strlen($n) == 4) // 32 bits
+            return unpack('V', $n)[1];
+        else
+            throw new \Exception('number too big');
+    }
+
+    public function pushSizeStringToInt($size)
+    {
+        if(strlen($size) < 5)
+            return $this->varIntStringToInt($size);
         else
             throw new \Exception('invalid size');
     }
@@ -104,6 +112,10 @@ class Interpreter
 
     public function executeOpCode($position = 0)
     {
+        $bnZero = 0;
+        $bnOne = 1;
+        $bnFalse = 0;
+        $bnTrue = 1;
         $nextPosition = 0;
         $rOpCode = ord(substr($this->script, $position, 1));
         $opCode = $this->rOpCodes[$rOpCode];
@@ -467,7 +479,7 @@ class Interpreter
                                 }
                             }
                             break;
-
+*/
 
                         //
                         // Numeric
@@ -480,22 +492,24 @@ class Interpreter
                         case 'OP_0NOTEQUAL':
                         {
                             // (in -- out)
-                            if (stack.size() < 1)
+                            if (count($this->mainStack) < 1)
                                 return false;
-                            CScriptNum bn(stacktop(-1));
-                                switch (opcode)
-                                {
-                                    case OP_1ADD:       bn += bnOne; break;
-                                    case OP_1SUB:       bn -= bnOne; break;
-                                    case OP_NEGATE:     bn = -bn; break;
-                                    case OP_ABS:        if (bn < bnZero) bn = -bn; break;
-                                    case OP_NOT:        bn = (bn == bnZero); break;
-                                    case OP_0NOTEQUAL:  bn = (bn != bnZero); break;
-                                    default:            assert(!"invalid opcode"); break;
-                                }
-                                popstack(stack);
-                                stack.push_back(bn.getvch());
+                            $bn = $this->varIntStringToInt($this->popFromMainStack());
+                            switch ($opCode)
+                            {
+                                case OpCodes::OP_1ADD:       $bn += $bnOne; break;
+                                case OpCodes::OP_1SUB:       $bn -= $bnOne; break;
+                                case OpCodes::OP_NEGATE:     $bn = -$bn; break;
+                                case OpCodes::OP_ABS:        if ($bn < $bnZero) $bn = -$bn; break;
+                                case OpCodes::OP_NOT:        $bn = (int)($bn == $bnZero); break;
+                                case OpCodes::OP_0NOTEQUAL:  $bn = (int)($bn != $bnZero); break;
+                                default:
+                                    throw new \Exception('invalid opcode');
+                                    break;
                             }
+                            $this->popFromMainStack();
+                            $this->pushOnMainStack($this->numToVarIntString($bn));
+                        }
                             break;
 
                         case 'OP_ADD':
@@ -513,48 +527,52 @@ class Interpreter
                         case 'OP_MAX':
                         {
                             // (x1 x2 -- out)
-                            if (stack.size() < 2)
+                            if (count($this->mainStack) < 2)
                                 return false;
-                            CScriptNum bn1(stacktop(-2));
-                                CScriptNum bn2(stacktop(-1));
-                                CScriptNum bn(0);
-                                switch (opcode)
-                                {
-                                    case OP_ADD:
-                                        bn = bn1 + bn2;
+                            $bn1 = $this->stacktop(-2);
+                            $bn2 = $this->stacktop(-1);
+                            $bn = 0;
+                            switch ($opCode)
+                            {
+                                    case OpCodes::OP_ADD:
+                                        $bn = $bn1 + $bn2;
                                         break;
 
-                                    case OP_SUB:
-                                        bn = bn1 - bn2;
+                                    case OpCodes::OP_SUB:
+                                        $bn = $bn1 - $bn2;
                                         break;
 
-                                    case OP_BOOLAND:             bn = (bn1 != bnZero && bn2 != bnZero); break;
-                                    case OP_BOOLOR:              bn = (bn1 != bnZero || bn2 != bnZero); break;
-                                    case OP_NUMEQUAL:            bn = (bn1 == bn2); break;
-                                    case OP_NUMEQUALVERIFY:      bn = (bn1 == bn2); break;
-                                    case OP_NUMNOTEQUAL:         bn = (bn1 != bn2); break;
-                                    case OP_LESSTHAN:            bn = (bn1 < bn2); break;
-                                    case OP_GREATERTHAN:         bn = (bn1 > bn2); break;
-                                    case OP_LESSTHANOREQUAL:     bn = (bn1 <= bn2); break;
-                                    case OP_GREATERTHANOREQUAL:  bn = (bn1 >= bn2); break;
-                                    case OP_MIN:                 bn = (bn1 < bn2 ? bn1 : bn2); break;
-                                    case OP_MAX:                 bn = (bn1 > bn2 ? bn1 : bn2); break;
-                                    default:                     assert(!"invalid opcode"); break;
+                                    case OpCodes::OP_BOOLAND:             $bn = ($bn1 != $bnZero && $bn2 != $bnZero); break;
+                                    case OpCodes::OP_BOOLOR:              $bn = ($bn1 != $bnZero || $bn2 != $bnZero); break;
+                                    case OpCodes::OP_NUMEQUAL:            $bn = ($bn1 == $bn2); break;
+                                    case OpCodes::OP_NUMEQUALVERIFY:      $bn = ($bn1 == $bn2); break;
+                                    case OpCodes::OP_NUMNOTEQUAL:         $bn = ($bn1 != $bn2); break;
+                                    case OpCodes::OP_LESSTHAN:            $bn = ($bn1 < $bn2); break;
+                                    case OpCodes::OP_GREATERTHAN:         $bn = ($bn1 > $bn2); break;
+                                    case OpCodes::OP_LESSTHANOREQUAL:     $bn = ($bn1 <= $bn2); break;
+                                    case OpCodes::OP_GREATERTHANOREQUAL:  $bn = ($bn1 >= $bn2); break;
+                                    case OpCodes::OP_MIN:                 $bn = ($bn1 < $bn2 ? $bn1 : $bn2); break;
+                                    case OpCodes::OP_MAX:                 $bn = ($bn1 > $bn2 ? $bn1 : $bn2); break;
+                                    default:
+                                        throw new \Exception('Invalid op code');
+                                        break;
                                 }
-                                popstack(stack);
-                                popstack(stack);
-                                stack.push_back(bn.getvch());
+                                $this->popFromMainStack();
+                                $this->popFromMainStack();
+                                $this->pushOnMainStack($this->numToVarIntString($bn));
 
-                                if (opcode == OP_NUMEQUALVERIFY)
+                                if ($opCode == OpCodes::OP_NUMEQUALVERIFY)
                                 {
-                                    if (CastToBool(stacktop(-1)))
-                                        popstack(stack);
+                                    if ($this->castToBool(
+                                        $this->varIntStringToInt($this->stacktop(-1))
+                                    ))
+                                        $this->popFromMainStack();
                                     else
                                         return false;
                                 }
                             }
                             break;
-
+/*
                         case 'OP_WITHIN':
                         {
                             // (x min max -- out)
