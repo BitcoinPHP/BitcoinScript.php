@@ -88,8 +88,9 @@ class Interpreter
 
     public function evalScript($verbose = false)
     {
+        $position = 0;
         do {
-            $position = $this->executeOpCode();
+            $position = $this->executeOpCode($position);
             if($verbose)
             {
                 echo 'Main stack: ';
@@ -116,13 +117,13 @@ class Interpreter
                 if($opCode == OpCodes::OP_PUSHDATA1)
                     $pushSizeLength = 1;
 
-                if($opCode == OpCodes::OP_PUSHDATA1)
+                if($opCode == OpCodes::OP_PUSHDATA2)
                     $pushSizeLength = 2;
 
-                if($opCode == OpCodes::OP_PUSHDATA1)
+                if($opCode == OpCodes::OP_PUSHDATA3)
                     $pushSizeLength = 3;
 
-                if($opCode == OpCodes::OP_PUSHDATA1)
+                if($opCode == OpCodes::OP_PUSHDATA4)
                     $pushSizeLength = 4;
 
                 $pushLength = $this->pushSizeStringToInt(substr($this->script, $position + 1, $pushSizeLength));
@@ -165,7 +166,7 @@ class Interpreter
             case OpCodes::OP_15:
             case OpCodes::OP_16:
                 // ( -- value)
-                $bn = $rOpCode - $this->opCodes['OP_1'] - 1;
+                $bn = $rOpCode - $this->opCodes['OP_1'] + 1;
                 $this->pushOnMainStack(substr($this->script, $position + 1, $bn));
                 $nextPosition = $this->nextPosition($position, 1 + $bn);
                 break;

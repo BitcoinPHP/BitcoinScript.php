@@ -15,10 +15,23 @@ $scriptBuilder = new ScriptBuilder($opCodes);
 
 $scriptBuilder->setInterpreter($interpreter);
 
-$scriptBuilder->pushData('HELLO')
+$script = $scriptBuilder->pushData('HELLO')
               ->pushData('HELLO2')
-              ->addOpCode(OpCodes::OP_EQUAL)
+              ->pushData('LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL')
+              ->pushNumber(4)
+              ->pushNumber(2)
+              ->pushNumber(42)
+             // ->addOpCode(OpCodes::OP_EQUAL)
+              ->addOpCode(OpCodes::OP_DROP)
+              ->addOpCode(OpCodes::OP_DROP)
+              ->addOpCode(OpCodes::OP_DROP)
               ->addOpCode(OpCodes::OP_DROP)
               ->addOpCode(OpCodes::OP_DUP)
-              ->addOpCode(OpCodes::OP_EQUAL)
-              ->dumpScript();
+              ->addOpCode(OpCodes::OP_DUP)
+              //->addOpCode(OpCodes::OP_EQUAL)
+              ->getHexScript();
+
+$scriptBuilder->dumpScript();
+
+$interpreter->setHexScript($script);
+$interpreter->evalScript(true);
