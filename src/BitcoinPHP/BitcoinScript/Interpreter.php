@@ -480,7 +480,7 @@ class Interpreter
                         case 'OP_0NOTEQUAL':
                         {
                             // (in -- out)
-                            if (stack.size() < 1)
+                            if (count($this->mainStack) < 1)
                                 return false;
                             CScriptNum bn(stacktop(-1));
                                 switch (opcode)
