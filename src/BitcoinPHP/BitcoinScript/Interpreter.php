@@ -51,16 +51,15 @@ class Interpreter
 
     public function varIntStringToInt($n)
     {
-        if(strlen($n) == 1) // 8 bits
+        if (strlen($n) == 1) // 8 bits
             return ord($n);
-        elseif(strlen($n) == 2) // 16 bits
+        elseif (strlen($n) == 2) // 16 bits
             return unpack('v', $n)[1];
-        elseif(strlen($n) == 3) // 24 bits
+        elseif (strlen($n) == 3) // 24 bits
         { // according to http://stackoverflow.com/a/11732142/2652054
             $return = unpack('ca/ab/cc', $n);
             return $return['a'] + ($return['b'] << 8) + ($return['c'] << 16);
-        }
-        elseif(strlen($n) == 4) // 32 bits
+        } elseif (strlen($n) == 4) // 32 bits
             return unpack('V', $n)[1];
         else
             throw new \Exception('number too big');
@@ -68,7 +67,7 @@ class Interpreter
 
     public function pushSizeStringToInt($size)
     {
-        if(strlen($size) < 5)
+        if (strlen($size) < 5)
             return $this->varIntStringToInt($size);
         else
             throw new \Exception('invalid size');
@@ -99,8 +98,7 @@ class Interpreter
         $position = 0;
         do {
             $position = $this->executeOpCode($position);
-            if($verbose)
-            {
+            if ($verbose) {
                 echo 'Main stack: ';
                 $this->dumpMainStack();
                 echo "\n";
@@ -128,16 +126,16 @@ class Interpreter
             case OpCodes::OP_PUSHDATA4:
                 $pushSizeLength = 0;
 
-                if($opCode == OpCodes::OP_PUSHDATA1)
+                if ($opCode == OpCodes::OP_PUSHDATA1)
                     $pushSizeLength = 1;
 
-                if($opCode == OpCodes::OP_PUSHDATA2)
+                if ($opCode == OpCodes::OP_PUSHDATA2)
                     $pushSizeLength = 2;
 
-                if($opCode == OpCodes::OP_PUSHDATA3)
+                if ($opCode == OpCodes::OP_PUSHDATA3)
                     $pushSizeLength = 3;
 
-                if($opCode == OpCodes::OP_PUSHDATA4)
+                if ($opCode == OpCodes::OP_PUSHDATA4)
                     $pushSizeLength = 4;
 
                 $pushLength = $this->pushSizeStringToInt(substr($this->script, $position + 1, $pushSizeLength));
@@ -451,142 +449,169 @@ class Interpreter
                 break;
 
 
-                        case OpCodes::OP_EQUAL:
-                        case OpCodes::OP_EQUALVERIFY:
-                            //case OP_NOTEQUAL: // use OP_NUMNOTEQUAL
-                        {
-                                // (x1 x2 - bool)
-                                if (count($this->mainStack) < 2)
-                                    return false;
-                                $vch1 = $this->stacktop(-2);
-                                $vch2 = $this->stacktop(-1);
-                                $fEqual = ($vch1 === $vch2);
-                                // OP_NOTEQUAL is disabled because it would be too easy to say
-                                // something like n != 1 and have some wiseguy pass in 1 with extra
-                                // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
-                                //if (opcode == OP_NOTEQUAL)
-                                //    fEqual = !fEqual;
-                                $this->popFromMainStack();
-                                $this->popFromMainStack();
-                                $this->pushOnMainStack($fEqual ? $vchTrue : $vchFalse);
-                                if ($opCode === OpCodes::OP_EQUALVERIFY)
-                                {
-                                    if ($fEqual)
-                                        $this->popFromMainStack();
-                                    else
-                                        return false;
-                                }
-                            }
-                            break;
+            case OpCodes::OP_EQUAL:
+            case OpCodes::OP_EQUALVERIFY: //case OP_NOTEQUAL: // use OP_NUMNOTEQUAL
+            {
+                // (x1 x2 - bool)
+                if (count($this->mainStack) < 2)
+                    return false;
+                $vch1 = $this->stacktop(-2);
+                $vch2 = $this->stacktop(-1);
+                $fEqual = ($vch1 === $vch2);
+                // OP_NOTEQUAL is disabled because it would be too easy to say
+                // something like n != 1 and have some wiseguy pass in 1 with extra
+                // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
+                //if (opcode == OP_NOTEQUAL)
+                //    fEqual = !fEqual;
+                $this->popFromMainStack();
+                $this->popFromMainStack();
+                $this->pushOnMainStack($fEqual ? $vchTrue : $vchFalse);
+                if ($opCode === OpCodes::OP_EQUALVERIFY) {
+                    if ($fEqual)
+                        $this->popFromMainStack();
+                    else
+                        return false;
+                }
+            }
+                break;
 
 
-                        //
-                        // Numeric
-                        //
-                        case OpCodes::OP_1ADD:
-                        case OpCodes::OP_1SUB:
-                        case OpCodes::OP_NEGATE:
-                        case OpCodes::OP_ABS:
-                        case OpCodes::OP_NOT:
-                        case OpCodes::OP_0NOTEQUAL:
-                        {
-                            // (in -- out)
-                            if (count($this->mainStack) < 1)
-                                return false;
-                            $bn = $this->varIntStringToInt($this->popFromMainStack());
-                            switch ($opCode)
-                            {
-                                case OpCodes::OP_1ADD:       $bn += $bnOne; break;
-                                case OpCodes::OP_1SUB:       $bn -= $bnOne; break;
-                                case OpCodes::OP_NEGATE:     $bn = -$bn; break;
-                                case OpCodes::OP_ABS:        if ($bn < $bnZero) $bn = -$bn; break;
-                                case OpCodes::OP_NOT:        $bn = (int)($bn == $bnZero); break;
-                                case OpCodes::OP_0NOTEQUAL:  $bn = (int)($bn != $bnZero); break;
-                                default:
-                                    throw new \Exception('invalid opcode');
-                                    break;
-                            }
-                            $this->popFromMainStack();
-                            $this->pushOnMainStack($this->numToVarIntString($bn));
-                        }
-                            break;
+            //
+            // Numeric
+            //
+            case OpCodes::OP_1ADD:
+            case OpCodes::OP_1SUB:
+            case OpCodes::OP_NEGATE:
+            case OpCodes::OP_ABS:
+            case OpCodes::OP_NOT:
+            case OpCodes::OP_0NOTEQUAL: {
+                // (in -- out)
+                if (count($this->mainStack) < 1)
+                    return false;
+                $bn = $this->varIntStringToInt($this->popFromMainStack());
+                switch ($opCode) {
+                    case OpCodes::OP_1ADD:
+                        $bn += $bnOne;
+                        break;
+                    case OpCodes::OP_1SUB:
+                        $bn -= $bnOne;
+                        break;
+                    case OpCodes::OP_NEGATE:
+                        $bn = -$bn;
+                        break;
+                    case OpCodes::OP_ABS:
+                        if ($bn < $bnZero) $bn = -$bn;
+                        break;
+                    case OpCodes::OP_NOT:
+                        $bn = (int)($bn == $bnZero);
+                        break;
+                    case OpCodes::OP_0NOTEQUAL:
+                        $bn = (int)($bn != $bnZero);
+                        break;
+                    default:
+                        throw new \Exception('invalid opcode');
+                        break;
+                }
+                $this->popFromMainStack();
+                $this->pushOnMainStack($this->numToVarIntString($bn));
+            }
+                break;
 
-                        case 'OP_ADD':
-                        case 'OP_SUB':
-                        case 'OP_BOOLAND':
-                        case 'OP_BOOLOR':
-                        case 'OP_NUMEQUAL':
-                        case 'OP_NUMEQUALVERIFY':
-                        case 'OP_NUMNOTEQUAL':
-                        case 'OP_LESSTHAN':
-                        case 'OP_GREATERTHAN':
-                        case 'OP_LESSTHANOREQUAL':
-                        case 'OP_GREATERTHANOREQUAL':
-                        case 'OP_MIN':
-                        case 'OP_MAX':
-                        {
-                            // (x1 x2 -- out)
-                            if (count($this->mainStack) < 2)
-                                return false;
-                            $bn1 = $this->stacktop(-2);
-                            $bn2 = $this->stacktop(-1);
-                            $bn = 0;
-                            switch ($opCode)
-                            {
-                                    case OpCodes::OP_ADD:
-                                        $bn = $bn1 + $bn2;
-                                        break;
+            case 'OP_ADD':
+            case 'OP_SUB':
+            case 'OP_BOOLAND':
+            case 'OP_BOOLOR':
+            case 'OP_NUMEQUAL':
+            case 'OP_NUMEQUALVERIFY':
+            case 'OP_NUMNOTEQUAL':
+            case 'OP_LESSTHAN':
+            case 'OP_GREATERTHAN':
+            case 'OP_LESSTHANOREQUAL':
+            case 'OP_GREATERTHANOREQUAL':
+            case 'OP_MIN':
+            case 'OP_MAX': {
+                // (x1 x2 -- out)
+                if (count($this->mainStack) < 2)
+                    return false;
+                $bn1 = $this->stacktop(-2);
+                $bn2 = $this->stacktop(-1);
+                $bn = 0;
+                switch ($opCode) {
+                    case OpCodes::OP_ADD:
+                        $bn = $bn1 + $bn2;
+                        break;
 
-                                    case OpCodes::OP_SUB:
-                                        $bn = $bn1 - $bn2;
-                                        break;
+                    case OpCodes::OP_SUB:
+                        $bn = $bn1 - $bn2;
+                        break;
 
-                                    case OpCodes::OP_BOOLAND:             $bn = ($bn1 != $bnZero && $bn2 != $bnZero); break;
-                                    case OpCodes::OP_BOOLOR:              $bn = ($bn1 != $bnZero || $bn2 != $bnZero); break;
-                                    case OpCodes::OP_NUMEQUAL:            $bn = ($bn1 == $bn2); break;
-                                    case OpCodes::OP_NUMEQUALVERIFY:      $bn = ($bn1 == $bn2); break;
-                                    case OpCodes::OP_NUMNOTEQUAL:         $bn = ($bn1 != $bn2); break;
-                                    case OpCodes::OP_LESSTHAN:            $bn = ($bn1 < $bn2); break;
-                                    case OpCodes::OP_GREATERTHAN:         $bn = ($bn1 > $bn2); break;
-                                    case OpCodes::OP_LESSTHANOREQUAL:     $bn = ($bn1 <= $bn2); break;
-                                    case OpCodes::OP_GREATERTHANOREQUAL:  $bn = ($bn1 >= $bn2); break;
-                                    case OpCodes::OP_MIN:                 $bn = ($bn1 < $bn2 ? $bn1 : $bn2); break;
-                                    case OpCodes::OP_MAX:                 $bn = ($bn1 > $bn2 ? $bn1 : $bn2); break;
-                                    default:
-                                        throw new \Exception('Invalid op code');
-                                        break;
-                                }
-                                $this->popFromMainStack();
-                                $this->popFromMainStack();
-                                $this->pushOnMainStack($this->numToVarIntString($bn));
+                    case OpCodes::OP_BOOLAND:
+                        $bn = ($bn1 != $bnZero && $bn2 != $bnZero);
+                        break;
+                    case OpCodes::OP_BOOLOR:
+                        $bn = ($bn1 != $bnZero || $bn2 != $bnZero);
+                        break;
+                    case OpCodes::OP_NUMEQUAL:
+                        $bn = ($bn1 == $bn2);
+                        break;
+                    case OpCodes::OP_NUMEQUALVERIFY:
+                        $bn = ($bn1 == $bn2);
+                        break;
+                    case OpCodes::OP_NUMNOTEQUAL:
+                        $bn = ($bn1 != $bn2);
+                        break;
+                    case OpCodes::OP_LESSTHAN:
+                        $bn = ($bn1 < $bn2);
+                        break;
+                    case OpCodes::OP_GREATERTHAN:
+                        $bn = ($bn1 > $bn2);
+                        break;
+                    case OpCodes::OP_LESSTHANOREQUAL:
+                        $bn = ($bn1 <= $bn2);
+                        break;
+                    case OpCodes::OP_GREATERTHANOREQUAL:
+                        $bn = ($bn1 >= $bn2);
+                        break;
+                    case OpCodes::OP_MIN:
+                        $bn = ($bn1 < $bn2 ? $bn1 : $bn2);
+                        break;
+                    case OpCodes::OP_MAX:
+                        $bn = ($bn1 > $bn2 ? $bn1 : $bn2);
+                        break;
+                    default:
+                        throw new \Exception('Invalid op code');
+                        break;
+                }
+                $this->popFromMainStack();
+                $this->popFromMainStack();
+                $this->pushOnMainStack($this->numToVarIntString($bn));
 
-                                if ($opCode == OpCodes::OP_NUMEQUALVERIFY)
-                                {
-                                    if ($this->castToBool(
-                                        $this->varIntStringToInt($this->stacktop(-1))
-                                    ))
-                                        $this->popFromMainStack();
-                                    else
-                                        return false;
-                                }
-                            }
-                            break;
+                if ($opCode == OpCodes::OP_NUMEQUALVERIFY) {
+                    if ($this->castToBool(
+                        $this->varIntStringToInt($this->stacktop(-1))
+                    )
+                    )
+                        $this->popFromMainStack();
+                    else
+                        return false;
+                }
+            }
+                break;
 
-                        case OpCodes::OP_WITHIN:
-                        {
-                            // (x min max -- out)
-                            if (count($this->mainStack) < 3)
-                                return false;
-                                $bn1 = $this->stacktop(-3);
-                                $bn2 = $this->stacktop(-2);
-                                $bn3 = $this->stacktop(-1);
-                                $fValue = ($bn2 <= $bn1 && $bn1 < $bn3);
-                                $this->popFromMainStack();
-                                $this->popFromMainStack();
-                                $this->popFromMainStack();
-                                $this->pushOnMainStack($fValue? $vchTrue : $vchFalse);
-                            }
-                            break;
+            case OpCodes::OP_WITHIN: {
+                // (x min max -- out)
+                if (count($this->mainStack) < 3)
+                    return false;
+                $bn1 = $this->stacktop(-3);
+                $bn2 = $this->stacktop(-2);
+                $bn3 = $this->stacktop(-1);
+                $fValue = ($bn2 <= $bn1 && $bn1 < $bn3);
+                $this->popFromMainStack();
+                $this->popFromMainStack();
+                $this->popFromMainStack();
+                $this->pushOnMainStack($fValue ? $vchTrue : $vchFalse);
+            }
+                break;
 
 
 
