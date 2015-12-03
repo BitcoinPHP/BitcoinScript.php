@@ -450,48 +450,45 @@ class Interpreter
                 $nextPosition = $this->nextPosition($position);
                 break;
 
-            /*
-                        //
-                        // Bitwise logic
-                        //
-                        case 'OP_EQUAL':
-                        case 'OP_EQUALVERIFY':
+
+                        case OpCodes::OP_EQUAL:
+                        case OpCodes::OP_EQUALVERIFY:
                             //case OP_NOTEQUAL: // use OP_NUMNOTEQUAL
                         {
-                            // (x1 x2 - bool)
-                            if (count($this->mainStack) < 2)
-                                return false;
-                            valtype& vch1 = stacktop(-2);
-                            valtype& vch2 = stacktop(-1);
-                            bool fEqual = (vch1 == vch2);
+                                // (x1 x2 - bool)
+                                if (count($this->mainStack) < 2)
+                                    return false;
+                                $vch1 = $this->stacktop(-2);
+                                $vch2 = $this->stacktop(-1);
+                                $fEqual = ($vch1 === $vch2);
                                 // OP_NOTEQUAL is disabled because it would be too easy to say
                                 // something like n != 1 and have some wiseguy pass in 1 with extra
                                 // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
                                 //if (opcode == OP_NOTEQUAL)
                                 //    fEqual = !fEqual;
-                                popstack(stack);
-                                popstack(stack);
-                                stack.push_back(fEqual ? vchTrue : vchFalse);
-                                if (opcode == OP_EQUALVERIFY)
+                                $this->popFromMainStack();
+                                $this->popFromMainStack();
+                                $this->pushOnMainStack($fEqual ? $vchTrue : $vchFalse);
+                                if ($opCode === OpCodes::OP_EQUALVERIFY)
                                 {
-                                    if (fEqual)
-                                        popstack(stack);
+                                    if ($fEqual)
+                                        $this->popFromMainStack();
                                     else
                                         return false;
                                 }
                             }
                             break;
-*/
+
 
                         //
                         // Numeric
                         //
-                        case 'OP_1ADD':
-                        case 'OP_1SUB':
-                        case 'OP_NEGATE':
-                        case 'OP_ABS':
-                        case 'OP_NOT':
-                        case 'OP_0NOTEQUAL':
+                        case OpCodes::OP_1ADD:
+                        case OpCodes::OP_1SUB:
+                        case OpCodes::OP_NEGATE:
+                        case OpCodes::OP_ABS:
+                        case OpCodes::OP_NOT:
+                        case OpCodes::OP_0NOTEQUAL:
                         {
                             // (in -- out)
                             if (count($this->mainStack) < 1)
