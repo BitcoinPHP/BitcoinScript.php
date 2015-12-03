@@ -116,6 +116,8 @@ class Interpreter
         $bnOne = 1;
         $bnFalse = 0;
         $bnTrue = 1;
+        $vchFalse = 0;
+        $vchTrue = 1;
         $nextPosition = 0;
         $rOpCode = ord(substr($this->script, $position, 1));
         $opCode = $this->rOpCodes[$rOpCode];
@@ -572,24 +574,24 @@ class Interpreter
                                 }
                             }
                             break;
-/*
-                        case 'OP_WITHIN':
+
+                        case OpCodes::OP_WITHIN:
                         {
                             // (x min max -- out)
-                            if (stack.size() < 3)
+                            if (count($this->mainStack) < 3)
                                 return false;
-                            CScriptNum bn1(stacktop(-3));
-                                CScriptNum bn2(stacktop(-2));
-                                CScriptNum bn3(stacktop(-1));
-                                bool fValue = (bn2 <= bn1 && bn1 < bn3);
-                                popstack(stack);
-                                popstack(stack);
-                                popstack(stack);
-                                stack.push_back(fValue ? vchTrue : vchFalse);
+                                $bn1 = $this->stacktop(-3);
+                                $bn2 = $this->stacktop(-2);
+                                $bn3 = $this->stacktop(-1);
+                                $fValue = ($bn2 <= $bn1 && $bn1 < $bn3);
+                                $this->popFromMainStack();
+                                $this->popFromMainStack();
+                                $this->popFromMainStack();
+                                $this->pushOnMainStack($fValue? $vchTrue : $vchFalse);
                             }
                             break;
 
-            */
+
 
             //
             // Crypto
