@@ -122,7 +122,6 @@ class Interpreter
         switch ($opCode) {
             case OpCodes::OP_PUSHDATA1:
             case OpCodes::OP_PUSHDATA2:
-            case OpCodes::OP_PUSHDATA3:
             case OpCodes::OP_PUSHDATA4:
                 $pushSizeLength = 0;
 
@@ -131,9 +130,6 @@ class Interpreter
 
                 if ($opCode == OpCodes::OP_PUSHDATA2)
                     $pushSizeLength = 2;
-
-                if ($opCode == OpCodes::OP_PUSHDATA3)
-                    $pushSizeLength = 3;
 
                 if ($opCode == OpCodes::OP_PUSHDATA4)
                     $pushSizeLength = 4;
