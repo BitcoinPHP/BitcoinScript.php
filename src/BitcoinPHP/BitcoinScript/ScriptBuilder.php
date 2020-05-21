@@ -121,10 +121,6 @@ class ScriptBuilder
             case 2:
                 array_push($this->script, array('opCode' => OpCodes::OP_PUSHDATA2));
             break;
-
-            case 3:
-                array_push($this->script, array('opCode' => OpCodes::OP_PUSHDATA3));
-            break;
         }
 
         if(strlen($data) > 17)
